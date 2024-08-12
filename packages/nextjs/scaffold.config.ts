@@ -1,3 +1,4 @@
+import { defineChain } from "viem";
 import * as chains from "viem/chains";
 
 export type ScaffoldConfig = {
@@ -8,9 +9,28 @@ export type ScaffoldConfig = {
   onlyLocalBurnerWallet: boolean;
 };
 
+export const metisSepolia = defineChain({
+  id: 59902,
+  name: "metisSepolia",
+  nativeCurrency: { name: "tMetis", symbol: "tMETIS", decimals: 18 },
+  rpcUrls: {
+    default: {
+      http: ["https://sepolia.metisdevops.link"],
+    },
+  },
+  blockExplorers: {
+    default: {
+      name: "Etherscan",
+      url: "https://sepolia-explorer-api.metisdevops.link",
+      apiUrl: "https://sepolia-explorer-api.metisdevops.link/api",
+    },
+  },
+  testnet: true,
+});
+
 const scaffoldConfig = {
   // The networks on which your DApp is live
-  targetNetworks: [chains.hardhat],
+  targetNetworks: [metisSepolia],
 
   // The interval at which your front-end polls the RPC servers for new data
   // it has no effect if you only target the local network (default is 4000)

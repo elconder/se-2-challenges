@@ -30,7 +30,7 @@ const config: HardhatUserConfig = {
       },
     },
   },
-  defaultNetwork: "localhost",
+  defaultNetwork: "metisSepolia",
   namedAccounts: {
     deployer: {
       // By default, it will take the first Hardhat account as the deployer
@@ -38,6 +38,16 @@ const config: HardhatUserConfig = {
     },
   },
   networks: {
+    metisSepolia: {
+      url: "https://sepolia.metisdevops.link/",
+      accounts: [deployerPrivateKey],
+      verify: {
+        etherscan: {
+          apiKey: "apiKey is not required, just set a placeholder",
+          apiUrl: "https://sepolia.explorer.metisdevops.link",
+        },
+      },
+    },
     // View the networks that are pre-configured.
     // If the network you are looking for is not here you can add new network settings
     hardhat: {
