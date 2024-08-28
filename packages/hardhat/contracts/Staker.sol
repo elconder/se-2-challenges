@@ -1,31 +1,77 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.4;  //Do not change the solidity version as it negativly impacts submission grading
+pragma solidity 0.8.4; //Do not change the solidity version as it negativly impacts submission grading
 
 import "hardhat/console.sol";
 import "./ExampleExternalContract.sol";
 
 contract Staker {
+	ExampleExternalContract public exampleExternalContract;
 
-  ExampleExternalContract public exampleExternalContract;
+	mapping(address => uint256) public balances;
 
-  constructor(address exampleExternalContractAddress) {
-      exampleExternalContract = ExampleExternalContract(exampleExternalContractAddress);
-  }
+	uint256 public constant threshold = 1 ether;
+	uint256 public deadline = block.timestamp + 72 hours;
+	bool public openForWithdraw;
 
-  // Collect funds in a payable `stake()` function and track individual `balances` with a mapping:
-  // (Make sure to add a `Stake(address,uint256)` event and emit it for the frontend `All Stakings` tab to display)
+	event Stake(address, uint256);
 
+	constructor(address exampleExternalContractAddress) {
+		exampleExternalContract = ExampleExternalContract(
+			exampleExternalContractAddress
+		);
+	}
 
-  // After some `deadline` allow anyone to call an `execute()` function
-  // If the deadline has passed and the threshold is met, it should call `exampleExternalContract.complete{value: address(this).balance}()`
+	function stake() external payable {
+		require(block.timestamp < deadline, "Staking period has ended");
 
+		balances[msg.sender] += msg.value;
 
-  // If the `threshold` was not met, allow everyone to call a `withdraw()` function to withdraw their balance
+		emit Stake(msg.sender, msg.value);
+	}
 
+	function execute() external notCompleted {
+		console.log("@@@@@ balance = ", address(this).balance);
 
-  // Add a `timeLeft()` view function that returns the time left before the deadline for the frontend
+		require(
+			block.timestamp >= deadline,
+			"Deadline has not been reached yet"
+		);
 
+		if (address(this).balance >= threshold) {
+			console.log("@@@@@ balance >= threshold");
+			exampleExternalContract.complete{ value: address(this).balance }();
+		} else {
+			openForWithdraw = true;
+			console.log("@@@@@ openForWithdraw = true");
+		}
+	}
 
-  // Add the `receive()` special function that receives eth and calls stake()
+	function timeLeft() public view returns (uint256) {
+		if (block.timestamp >= deadline) {
+			return 0;
+		} else {
+			return deadline - block.timestamp;
+		}
+	}
 
+	function withdraw() external notCompleted {
+		require(openForWithdraw, "Withdrawls are not allowed");
+		uint256 userStake = balances[msg.sender];
+		require(userStake > 0, "You have no funds to withdraw");
+
+		balances[msg.sender] = 0;
+		payable(msg.sender).transfer(userStake);
+	}
+
+	receive() external payable {
+		this.stake();
+	}
+
+	modifier notCompleted() {
+		require(
+			!exampleExternalContract.completed(),
+			"ExampleExternalContract is already completed"
+		);
+		_;
+	}
 }
